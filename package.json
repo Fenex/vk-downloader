@@ -10,17 +10,17 @@
   },
   "scripts": {
     "start": "nw",
-    "build": "nwbuild -p win32,osx64 ./"
+    "build": "nwbuild -v 0.12.0 -p win32,osx64 ./",
+    "package-windows": "cd build/vk-downloader/win32/ && zip -r ../../vk-downloader.win32.zip * -9",
+    "package-osx": "cd build/vk-downloader/osx64/ && zip -r ../../vk-downloader.osx64.zip * -9",
+    "deploy": "npm run build && npm run package-windows && npm run package-osx"
   },
   "dependencies": {
-    "nw": "^0.12.2",
     "request": "^2.58.0",
     "request-progress": "^0.3.1",
+    "sanitize-filename": "^1.4.5",
     "vkontakte": "^0.3.0"
   },
   "license": "MIT",
-  "repository": "https://github.com/DarkXaHTeP/vk-downloader",
-  "devDependencies": {
-    "node-webkit-builder": "^1.0.12"
-  }
+  "repository": "DarkXaHTeP/vk-downloader"
 }

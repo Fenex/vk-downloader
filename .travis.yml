@@ -1,0 +1,17 @@
+language: node_js
+node_js:
+- 4.2.1
+sudo: true
+before_install:
+  - sudo npm i -g nw-builder
+script: sudo npm run deploy
+deploy:
+  provider: releases
+  api_key:
+    secure: wNbQ2ER3muXEzaxAcZvfgMVBXSu/OFdoLN4/JnMqGqts2ZCWHJJAXTGNQe2R1mCalEV/6o4SDpd+VoN3NbZAvdo+0B2cXkIDXh8ZBzIi9HHR2YNaSFuNofNQZ7S702MpQI2jIM1ux6wYlmAsw7PPEXuUTempy5gLb0qqyEKhHbds76xRHbN/cJKwFpyY/B+8F+HdM7DAh/fNgZzYzQDa+ct7hbf+TvPSLTLgkkXnsbsfcVtQcFEqOr6rdg16o9zN8+toNiD7EHQ+ZEXrJZFKi3nafWafQImjtcFMbJHJloSpp4FKsdkzdVSbhNebU4RcD9EX+cmftm1zjxjHY9+y0vN+JGuFclF3kNL0C/B9Dv0EmM6DXiQ9H/zYE7kK+ZEELKU54zuq0gl2pK/ABonFZ0XRQLS01Lgla7d4bxl6bqkN0bzAiJURuWk6Ybbs9XR5iX76QFSV+E9lOHu90D/PiAauUU+E8pJWqpiMkcn5IQ+ZWViy5LxQSirPvCyq5P3nAbyLguOUYxbVjeB23puzhxu8F0/TXMWtD9CtUZbYGucGKDkUPHXWRsQCsl3Mw8y9Pyw49tzna/ABdulU0G+qCZkyibb/GeH8VZDYny/q59FfG+MJMMPZjq8Lz6dm3KkCiFrAxOBRD6MYMjVqKi0IC6TVoNIIWfm+vlhqBHDWlXk=
+  file:
+    - .build/vk-downloader.win32.zip
+    - .build/vk-downloader.osx64.zip
+  skip_cleanup: true
+  on:
+    tags: true

@@ -4,6 +4,7 @@ var request = require('request');
 var progress = require('request-progress');
 var vkAuth = require('./vk/auth.js');
 var path = require('path');
+var sanitize = require('sanitize-filename');
 
 var ViewModel = function () {
     var self = this;
@@ -27,7 +28,7 @@ var ViewModel = function () {
                 audio.download(downloadStates.notStarted);
 
             })
-            .pipe(fs.createWriteStream(path.join(self.folder(), audio.title + '.mp3')))
+            .pipe(fs.createWriteStream(path.join(self.folder(), sanitize(audio.title) + '.mp3')))
             .on('error', function (err) {
                 alert(err.message);
                 audio.download(downloadStates.notStarted);
