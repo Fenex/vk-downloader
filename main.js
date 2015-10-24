@@ -80,6 +80,10 @@ var ViewModel = function () {
             return;
         }
 
+        var timer = setTimeout(function() {
+            finish(false);
+        }, 3 * 60 * 1000); // 3 mins
+        
         progress(request(audio.url), {
             throttle: 500,
             delay: 500
@@ -90,20 +94,25 @@ var ViewModel = function () {
             .on('error', function (err) {
                 alert(err.message);
                 audio.download(downloadStates.notStarted);
-                defer.resolve(false);
+                finish(false);
             })
             .pipe(fs.createWriteStream(path.join(self.folder(), sanitize(audio.title) + '.mp3')))
             .on('error', function (err) {
                 alert(err.message);
                 audio.download(downloadStates.notStarted);
-                defer.resolve(false);
+                finish(false);
             })
             .on('close', function (err) {
                 audio.download(downloadStates.completed);
-                defer.resolve(true);
+                finish(true);
             });
 
         audio.download(downloadStates.progress);
+        
+        function finish(status) {
+            defer.resolve(status);
+            clearTimeout(timer);
+        }
         
         return defer.promise;
     };
