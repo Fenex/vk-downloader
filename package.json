@@ -19,7 +19,8 @@
     "request": "^2.58.0",
     "request-progress": "^0.3.1",
     "sanitize-filename": "^1.4.5",
-    "vkontakte": "^0.3.0"
+    "vkontakte": "^0.3.0",
+    "q": "~1.4.1"
   },
   "license": "MIT",
   "repository": "DarkXaHTeP/vk-downloader"

@@ -5,12 +5,76 @@ var progress = require('request-progress');
 var vkAuth = require('./vk/auth.js');
 var path = require('path');
 var sanitize = require('sanitize-filename');
+var Q = require('q');
 
 var ViewModel = function () {
     var self = this;
     self.folder = ko.observable();
     self.audios = ko.observableArray();
+    
+    var GPpause = false;
+    self.groupDownloding = ko.observable(false);
+    self.groupCount = ko.observable(5);
+    self.groupCount.subscribe(function (value) {
+        value = parseInt(value);
+        if(isNaN(value)) {
+            self.groupCount(5);
+        } else if(value < 1) {
+            self.groupCount(1);
+        } else if(value > 10) {
+            self.groupCount(10);
+        }
+    });
+    
+    self.downloadAllPause = function() {
+        GPpause = true;
+    };
+    
+    self.downloadAll = function() {
+        if (!self.folder()) {
+            alert('Please select directory first');
+            return;
+        }
+        
+        self.groupDownloding(true);
+        
+        var audios = self.audios();
+        var index = 0;
+        var group = self.groupCount();
+        
+        function NextGroup() {
+            var array = [];
+            for(var i=index; ((i<index+group) && (i<audios.length)); i++) {
+                array.push(self.downloadAudio(audios[i]));
+            }
+            index += group;
+            return Q.all(array);
+        }
+        
+        function check() {
+            if(GPpause) {
+                GPpause = false;
+                self.groupDownloding(false)
+                return;
+            }
+            if(index>=audios.length) {
+                GPpause = false;
+                self.groupDownloding(false);
+                index = 0;
+                return;
+            }
+            
+            NextGroup().then(function(args) {
+                check();
+            });
+        }
+        
+        check();
+    };
+    
     self.downloadAudio = function (audio) {
+        var defer = Q.defer();
+        
         if (!self.folder()) {
             alert('Please select directory first');
             return;
@@ -26,18 +90,22 @@ var ViewModel = function () {
             .on('error', function (err) {
                 alert(err.message);
                 audio.download(downloadStates.notStarted);
-
+                defer.resolve(false);
             })
             .pipe(fs.createWriteStream(path.join(self.folder(), sanitize(audio.title) + '.mp3')))
             .on('error', function (err) {
                 alert(err.message);
                 audio.download(downloadStates.notStarted);
+                defer.resolve(false);
             })
             .on('close', function (err) {
                 audio.download(downloadStates.completed);
+                defer.resolve(true);
             });
 
         audio.download(downloadStates.progress);
+        
+        return defer.promise;
     };
 
 

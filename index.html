@@ -19,9 +19,21 @@
                     <div class="form-group">
                         <input type="text" class="form-control folder-display" placeholder="Choose directory..." readonly="readonly" data-bind="value: folder">
                     </div>
-                    <button type="button" class="btn btn-primary folder-button">Choose directory
-                        <input type="file" nwdirectory="nwdirectory" class="folder-select" data-bind="value: folder" />
+                    <button data-bind="disable: groupDownloding" type="button" class="btn btn-primary folder-button">Choose directory
+                        <input type="file" nwdirectory="nwdirectory" class="folder-select" data-bind="value: folder, disable: groupDownloding" />
                     </button>
+                </form>
+            </div>
+        </div>
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">Group download</a>
+            </div>
+            <div>
+                <form class="navbar-form navbar-left">
+                    <input type="number" class="form-control" data-bind="value: groupCount, disable: groupDownloding" />
+                    <button type="button" class="btn btn-primary" data-bind="click: downloadAll, disable: groupDownloding">Download All</button>
+                    <button type="button" class="btn btn-primary" data-bind="click: downloadAllPause, visible: groupDownloding">Stop</button>
                 </form>
             </div>
         </div>
@@ -41,7 +53,7 @@
                         <td data-bind="text: title"></td>
                         <td>
                             <!-- ko if: download() == downloadStates.notStarted -->
-                            <button type="button" class="btn btn-default btn-sm pull-right" data-bind="click: $parent.downloadAudio"><i class="glyphicon glyphicon-download-alt"></i></button>
+                            <button type="button" class="btn btn-default btn-sm pull-right" data-bind="click: $parent.downloadAudio, disable: $parent.groupDownloding"><i class="glyphicon glyphicon-download-alt"></i></button>
                             <!-- /ko -->
                             <!-- ko if: download() == downloadStates.progress -->
                             <div class="progress">
