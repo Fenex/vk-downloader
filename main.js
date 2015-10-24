@@ -40,14 +40,15 @@ var ViewModel = function () {
         
         var audios = self.audios();
         var index = 0;
-        var group = self.groupCount();
+        var group = parseInt(self.groupCount());
         
         function NextGroup() {
             var array = [];
-            for(var i=index; ((i<index+group) && (i<audios.length)); i++) {
+            for(var i=index; ((i<index+group) && (i<audios.length)); i++)
                 array.push(self.downloadAudio(audios[i]));
-            }
+            
             index += group;
+            
             return Q.all(array);
         }
         
