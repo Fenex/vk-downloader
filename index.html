@@ -8,6 +8,7 @@
 </head>
 
 <body>
+
 <div id="wrapper">
     <nav class="navbar navbar-default navbar-fixed-top">
         <div class="container-fluid">
@@ -21,6 +22,9 @@
                     </div>
                     <button data-bind="disable: groupDownloding" type="button" class="btn btn-primary folder-button">Choose directory
                         <input type="file" nwdirectory="nwdirectory" class="folder-select" data-bind="value: folder, disable: groupDownloding" />
+                    </button>
+                    <button class="btn btn-primary" data-bind="click: ClearLS, disable: groupDownloding">
+                        Clear LS
                     </button>
                 </form>
             </div>

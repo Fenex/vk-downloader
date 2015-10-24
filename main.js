@@ -26,6 +26,11 @@ var ViewModel = function () {
         }
     });
     
+    self.ClearLS = function() {
+        localStorage.clear();
+        location.reload();
+    };
+    
     self.downloadAllPause = function() {
         GPpause = true;
     };
