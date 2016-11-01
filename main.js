@@ -34,7 +34,7 @@ angular.module('VKD', [])
         
         this.artist = this.artist.trim();
         this.title = this.title.trim();
-        this.name = this.artist + ' - ' + this.title;
+        this.name = sanitize(this.artist + ' - ' + this.title);
         
         this.progress = 0;
         
@@ -50,7 +50,7 @@ angular.module('VKD', [])
     
     Audio.prototype.checkLocalFile = function() {
         var self = this;
-        fs.stat(Settings.dir + '/' + self.name + '.mp3', function(err, stats) {
+        fs.stat(path.join(Settings.dir, self.name + '.mp3'), function(err, stats) {
             if(err)
                 self.update({isExistLocal: false});
             else if(stats.isFile())
@@ -89,7 +89,7 @@ angular.module('VKD', [])
             self.update({progress: 0});
             defer.reject(err.message);
         })
-        .pipe(fs.createWriteStream(path.join(Settings.dir, sanitize(this.name) + '.mp3')))
+        .pipe(fs.createWriteStream(path.join(Settings.dir, this.name + '.mp3')))
         .on('error', function (err) {
             alert(err.message);
             self.update({progress: 0});
@@ -150,7 +150,7 @@ angular.module('VKD', [])
     }
   };
 }])
-.controller('MainCtrl', function(Settings, $scope, Audios, $interval) {
+.controller('MainCtrl', function(Settings, Audios) {
     var self = this;
     
     this.Audios = Audios;
@@ -175,6 +175,8 @@ angular.module('VKD', [])
                 downloadNext();
             });
         }
+        
+        downloading = false;
     };
     
     var downloading = false;
