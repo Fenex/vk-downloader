@@ -3,12 +3,14 @@
 <head>
     <title>VK Downloader</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.8/angular.min.js"></script>
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet"/>
+    <script type="text/javascript" src="main.js"></script>
     <link href="index.css" rel="stylesheet" />
 </head>
 
 <body>
-<div id="wrapper">
+<div id="wrapper" ng:app="VKD" ng:controller="MainCtrl as Main">
     <nav class="navbar navbar-default navbar-fixed-top">
         <div class="container-fluid">
             <div class="navbar-header">
@@ -17,11 +19,12 @@
             <div>
                 <form class="navbar-form navbar-left">
                     <div class="form-group">
-                        <input type="text" class="form-control folder-display" placeholder="Choose directory..." readonly="readonly" data-bind="value: folder">
+                        <input type="text" class="form-control folder-display" placeholder="Choose directory..." disabled ng:model="Main.Settings.dir">
                     </div>
-                    <button type="button" class="btn btn-primary folder-button">Choose directory
-                        <input type="file" nwdirectory="nwdirectory" class="folder-select" data-bind="value: folder" />
+                    <button type="button" ng:disabled="Main.isDownloading()" class="btn btn-primary folder-button">Choose directory
+                        <input type="file" nwdirectory="Main.Settings.dir" class="folder-select" />
                     </button>
+                    <button type="button" class="btn btn-primary" ng:disabled="!Main.Settings.dir" ng:click="Main.downloadAll()">{{Main.isDownloading() ? 'Stop downloading' : 'Download All'}}</button>
                 </form>
             </div>
         </div>
@@ -34,25 +37,25 @@
                     <tr>
                         <th class="title-column">Title</th>
                         <th class="progress-column text-right">Downloading</th>
+                        <th></th>
                     </tr>
                     </thead>
-                    <tbody data-bind="foreach: audios">
-                    <tr>
-                        <td data-bind="text: title"></td>
+                    <tbody>
+                    <tr class="audio" ng:repeat="audio in Main.Audios.list track by $index">
+                        <td ng:bind="audio.name"></td>
                         <td>
-                            <!-- ko if: download() == downloadStates.notStarted -->
-                            <button type="button" class="btn btn-default btn-sm pull-right" data-bind="click: $parent.downloadAudio"><i class="glyphicon glyphicon-download-alt"></i></button>
-                            <!-- /ko -->
-                            <!-- ko if: download() == downloadStates.progress -->
-                            <div class="progress">
-                                <div class="progress-bar progress-bar-striped" role="progressbar" data-bind="style: { width: progressBarValue }" style="width: 100%;"></div>
+                            <button type="button" ng:if="audio.progress == 0 && !audio.isExistLocal" class="btn btn-default btn-sm pull-right" ng:click="Main.download($index)"><i class="glyphicon glyphicon-download-alt"></i></button>
+
+                            <div class="progress" ng:if="audio.progress > 0 && audio.progress < 100">
+                                <div class="progress-bar progress-bar-striped" role="progressbar" ng:style="{width: audio.progress+'%'}" style="width: 100%;"></div>
                             </div>
-                            <!-- /ko -->
-                            <!-- ko if: download() == downloadStates.completed -->
-                            <div class="progress">
+                            
+                            <div class="progress" ng:if="audio.progress==100">
                                 <div class="progress-bar progress-bar-success" role="progressbar" style="width: 100%;"></div>
                             </div>
-                            <!-- /ko -->
+                        </td>
+                        <td style="width: 37px;">
+                            <i title ="already downloaded" ng:if="audio.isExistLocal" class="glyphicon glyphicon-hdd"></i>
                         </td>
                     </tr>
                     </tbody>
@@ -60,9 +63,6 @@
             </div>
         </div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.3.0/knockout-debug.js"></script>
-    <script type="text/javascript" src="main.js"></script>
 </div>
 </body>
 </html>

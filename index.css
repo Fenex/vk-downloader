@@ -25,3 +25,16 @@ body {
 .progress-column {
     width: 30%;
 }
+
+body .progress {
+    margin-bottom: 0px;
+}
+
+body .audio {
+    height: 37px;
+}
+
+body .audio button {
+    padding-top: 0px;
+    padding-bottom: 0px;
+}

@@ -6,71 +6,183 @@ var vkAuth = require('./vk/auth.js');
 var path = require('path');
 var sanitize = require('sanitize-filename');
 
-var ViewModel = function () {
-    var self = this;
-    self.folder = ko.observable();
-    self.audios = ko.observableArray();
-    self.downloadAudio = function (audio) {
-        if (!self.folder()) {
-            alert('Please select directory first');
-            return;
+angular.module('VKD', [])
+.value('Settings', {
+    dir: null
+})
+.factory('Audios', function(Audio) {
+    var Audios = {};
+    Audios.list = [];
+    
+    Audios.push = function(data) {
+        Audios.list.push(Audio(data));
+    };
+    
+    Audios.checkLocalFiles = function() {
+        Audios.list.forEach(function(item) {
+            item.checkLocalFile();
+        });
+    };
+    
+    return Audios;
+})
+.factory('Audio', function(Settings, $rootScope, $q) {
+    var Audio = function(data) {
+        for(var key in data) {
+            this[key] = data[key];
         }
-
-        progress(request(audio.url), {
+        
+        this.artist = this.artist.trim();
+        this.title = this.title.trim();
+        this.name = this.artist + ' - ' + this.title;
+        
+        this.progress = 0;
+        
+        this.isExistLocal = null;
+        
+        $rootScope.$watch(function() {
+            return Settings.dir;
+        }, function (a, b) {
+            this.progress = 0;
+            this.checkLocalFile();
+        }.bind(this));
+    }
+    
+    Audio.prototype.checkLocalFile = function() {
+        var self = this;
+        fs.stat(Settings.dir + '/' + self.name + '.mp3', function(err, stats) {
+            if(err)
+                self.update({isExistLocal: false});
+            else if(stats.isFile())
+                self.update({isExistLocal: true});
+            else
+                self.update({isExistLocal: false});
+        });
+    };
+    
+    Audio.prototype.update = function(data) {
+        for(var key in data) {
+            this[key] = data[key];
+        }
+        $rootScope.$apply();
+    };
+    
+    Audio.prototype.download = function() {
+        var self = this;
+        var defer = $q.defer();
+        
+        if(!Settings.dir)
+            return alert('Please select directory first');
+            
+        if(this.isExistLocal)
+            return;
+        
+        progress(request(this.url), {
             throttle: 500,
             delay: 500
         })
-            .on('progress', function (state) {
-                audio.progress(state.percent);
-            })
-            .on('error', function (err) {
-                alert(err.message);
-                audio.download(downloadStates.notStarted);
-
-            })
-            .pipe(fs.createWriteStream(path.join(self.folder(), sanitize(audio.title) + '.mp3')))
-            .on('error', function (err) {
-                alert(err.message);
-                audio.download(downloadStates.notStarted);
-            })
-            .on('close', function (err) {
-                audio.download(downloadStates.completed);
-            });
-
-        audio.download(downloadStates.progress);
+        .on('progress', function (state) {
+            self.update({progress: state.percent});
+        })
+        .on('error', function (err) {
+            alert(err.message);
+            self.update({progress: 0});
+            defer.reject(err.message);
+        })
+        .pipe(fs.createWriteStream(path.join(Settings.dir, sanitize(this.name) + '.mp3')))
+        .on('error', function (err) {
+            alert(err.message);
+            self.update({progress: 0});
+            defer.reject(err.message);
+        })
+        .on('close', function (err) {
+            self.update({progress: 100, isExistLocal: true});
+            defer.resolve();
+        });
+        
+        return defer.promise;
     };
-
-
+    
+    Audio.prototype.toString = function() {
+        return '[object VK-Audio]';
+    };
+    
+    return function (data) {
+        return new Audio(data);
+    }
+})
+.run(function(Audios, $timeout) {
     vkAuth(3965358, 'audio', '3.0').then(
         function (token) {
             var vk = vkontakte(token);
             vk('audio.get', {}, function (err, audios) {
-                self.audios(audios.map(function (data) {
-                    return new Audio(data);
-                }));
-            })
+                $timeout(function() {
+                    audios.map(function(data) {
+                        Audios.push(data);
+                    });
+                });
+            });
         },
         function (error) {
             alert(error);
         }
     );
-}
+})
+.directive('nwdirectory', ['$timeout', function ($timeout) {
+  return {
+    restrict: "A",
+    scope: {
+      directoryPath: "=nwdirectory"
+    },
+    link: function (scope, element) {
 
-var doc = document.getElementById('wrapper');
-ko.applyBindings(new ViewModel(), doc);
+      element.val(scope.directoryPath);
+      element.data('old-value', scope.directoryPath);
 
-var downloadStates = {
-    notStarted: 0,
-    progress: 1,
-    completed: 2
-}
-
-var Audio = function (data) {
-    this.title = data.artist + ' - ' + data.title;
-    this.url = data.url;
-    this.download = ko.observable(downloadStates.notStarted);
-    this.progress = ko.observable(0);
-    this.progressBarValue = ko.computed(function () {
-        return this.progress() + '%';
-    }, this);
-}
+      element.bind('change', function (blurEvent) {
+        if (element.data('old-value') != element.val()) {
+          $timeout(function () {
+            scope.directoryPath = element.val();
+            element.data('old-value', element.val());
+          });
+        }
+      });
+    }
+  };
+}])
+.controller('MainCtrl', function(Settings, $scope, Audios, $interval) {
+    var self = this;
+    
+    this.Audios = Audios;
+    this.Settings = Settings;
+    
+    this.download = function(index) {
+        Audios.list[index].download();
+    };
+    
+    function downloadNext() {
+        if(!downloading)
+            return;
+            
+        for(var i=0; i < Audios.list.length; i++) {
+            if(Audios.list[i].isExistLocal)
+                continue;
+            
+            if(Audios.list[i].progress > 0)
+                return;
+            
+            return Audios.list[i].download().then(function() {
+                downloadNext();
+            });
+        }
+    };
+    
+    var downloading = false;
+    this.isDownloading = function() {
+        return downloading;
+    }
+    this.downloadAll = function() {
+        downloading = !downloading;
+        downloadNext();
+    };
+});
